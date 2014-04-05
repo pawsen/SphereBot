@@ -1,3 +1,5 @@
+/* -*- coding: utf-8 -*- */
+
 /*
  * Copyright 2011 by Eberhard Rensch <http://pleasantsoftware.com/developer/3d>
  *
@@ -99,7 +101,7 @@ void setup()
 
     servo.attach(SERVO_PIN);
     servo.write(DEFAULT_PEN_UP_POSITION);
-    
+
     if(servoEnabled)
     {
       for(int i=0;i<100;i++)
