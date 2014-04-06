@@ -17,7 +17,7 @@ BOARD_TAG    = uno
 ARDUINO_PORT = /dev/ttyACM*
 
 # name of the folder in /urs/share/arduino/libraries/
-ARDUINO_LIBS = Servo TimerOne
+ARDUINO_LIBS = SoftwareServo TimerOne
 
 # Jeg ved ikke hvilken af følgende der skal ændres:
 # standard is 115200
@@ -37,4 +37,4 @@ AVR_TOOLS_DIR= /usr
 # suppress printing configuration.
 ARDUINO_QUIET=1
 
-include $(ARDMK_DIR)/arduino-mk/Arduino.mk
+include $(ARDMK_DIR)/Arduino.mk
