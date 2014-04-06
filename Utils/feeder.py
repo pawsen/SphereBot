@@ -11,10 +11,11 @@
 
 
 # Configure:
-BAUDRATE = 57600
+BAUDRATE = 9600
 DEVICE = "/dev/ttyUSB1"
 DEVICE = "/dev/tty.PL2303-00001004"
 DEVICE = "/dev/tty.PL2303-00004006"
+DEVICE = "/dev/ttyACM0"
 
 # End configuration
 
@@ -24,6 +25,7 @@ import sys
 import serial
 import re
 from optparse import OptionParser
+import time
 
 def y_displacement(x):
     # look into file egg-displace.dat for documentation
@@ -100,6 +102,16 @@ gcode = open(fileToFeed, "r")
 if options.wantToSend:
     sphereBot = serial.Serial(DEVICE, BAUDRATE, timeout=30)
 
+    sphereBot.write("Waitx1")
+    sphereBot.write("Waitx2")
+
+time.sleep(1)  # delays for 5 seconds
+sphereBot.write("Wait x1\n")
+sphereBot.write("Wait x2\n")
+response = sphereBot.readline()
+print(response)
+
+print("tester")
 currentLine = 0.0
 lines = gcode.readlines()
 totalLines = len(lines)
@@ -114,12 +126,13 @@ for line in lines:
         line = correctDisplacement(line)
         print ">> ", line,
 
-
+    print ("wantToSend", options.wantToSend)
     if options.wantToSend:
         sphereBot.write(line)
 
         response = sphereBot.readline()
-        while response[:3] != "ok:":
-            print "  ", response,
-            response = sphereBot.readline()
+        print(response)
+        # while response[:3] != "ok:":
+        #     print "  ", response,
+        #     response = sphereBot.readline()
 

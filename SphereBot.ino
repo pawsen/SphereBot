@@ -30,6 +30,14 @@
 #include <SoftwareServo.h>
 #include "StepperModel.h"
 
+void doInterrupt();
+void commitSteppers(double speedrate);
+void get_command();
+void clear_buffer();
+boolean getValue(char key, char command[], double* value);
+void process_commands(char command[], int command_length);
+void drawArc(double centerX, double centerY, double endpointX, double endpointY, boolean clockwise);
+
 
 #define TIMER_DELAY 64
 
@@ -40,7 +48,7 @@
 #define XAXIS_DIR_PIN 7
 #define XAXIS_STEP_PIN 8
 #define XAXIS_ENABLE_PIN 6
-#define XAXIS_ENDSTOP_PIN 3
+#define XAXIS_ENDSTOP_PIN -1
 
 #define YAXIS_DIR_PIN 10
 #define YAXIS_STEP_PIN 11
@@ -77,7 +85,7 @@ volatile boolean isRunning=false;
 // comm variables
 const int MAX_CMD_SIZE = 256;
 char buffer[MAX_CMD_SIZE]; // buffer for serial commands
-char serial_char; // value for each byte read in from serial comms
+//char serial_char; // value for each byte read in from serial comms
 int serial_count = 0; // current length of command
 char *strchr_pointer; // just a pointer to find chars in the cmd string like X, Y, Z, E, etc
 boolean comment_mode = false;
@@ -95,7 +103,8 @@ const double maxFeedrate = 6000.;
 
 void setup()
 {
-    Serial.begin(115200);
+    /* Serial.begin(115200); */
+    Serial.begin(9600);
 
     clear_buffer();
 
@@ -122,6 +131,7 @@ void setup()
     delay(2000);
     xAxisStepper.enableStepper(false);
 #endif
+    Serial.println("ready ok:");
 }
 
 void loop() // input loop, looks for manual input and then checks to see if and serial commands are coming in
@@ -178,44 +188,44 @@ void commitSteppers(double speedrate)
   rotationStepper.counter = negative_half_interval;
   xAxisStepper.counter = negative_half_interval;
 
-//  Serial.print("Speedrate:");
-//  Serial.print(speedrate, 6);
-//  Serial.print(" dX:");
-//  Serial.print(deltaStepsX);
-//  Serial.print(" dY:");
-//  Serial.print(deltaStepsY);
-//  Serial.print(" masterSteps:");
-//  Serial.print(masterSteps);
-//  Serial.print(" dDistX:");
-//  Serial.print(deltaDistanceX);
-//  Serial.print(" dDistY:");	
-//  Serial.print(deltaDistanceY);
-//  Serial.print(" distance:");
-//  Serial.print(distance);
-//  Serial.print(" sub1:");
-//  Serial.print(sub1, 6);
-//  Serial.print(" sub2:");
-//  Serial.print(sub2, 6);
-//  Serial.print(" intervals:");
-//  Serial.print(intervals);
-//  Serial.print(" negative_half_interval:");
-//  Serial.println(negative_half_interval);
-//  Serial.print("Y currentStepCount:");
-//  Serial.print(rotationStepper.currentStepcount);
-//  Serial.print(" targetStepCount:");
-//  Serial.println(rotationStepper.targetStepcount);
+ /* Serial.print("Speedrate:"); */
+ /* Serial.print(speedrate, 6); */
+ /* Serial.print(" dX:"); */
+ /* Serial.print(deltaStepsX); */
+ /* Serial.print(" dY:"); */
+ /* Serial.print(deltaStepsY); */
+ /* Serial.print(" masterSteps:"); */
+ /* Serial.print(masterSteps); */
+ /* Serial.print(" dDistX:"); */
+ /* Serial.print(deltaDistanceX); */
+ /* Serial.print(" dDistY:");	 */
+ /* Serial.print(deltaDistanceY); */
+ /* Serial.print(" distance:"); */
+ /* Serial.print(distance); */
+ /* Serial.print(" sub1:"); */
+ /* Serial.print(sub1, 6); */
+ /* Serial.print(" sub2:"); */
+ /* Serial.print(sub2, 6); */
+ /* Serial.print(" intervals:"); */
+ /* Serial.print(intervals); */
+ /* Serial.print(" negative_half_interval:"); */
+ /* Serial.println(negative_half_interval); */
+ /* Serial.print("Y currentStepCount:"); */
+ /* Serial.print(rotationStepper.currentStepcount); */
+ /* Serial.print(" targetStepCount:"); */
+ /* Serial.println(rotationStepper.targetStepcount); */
 
   isRunning=true;
 }
 
 void get_command() // gets commands from serial connection and then calls up subsequent functions to deal with them
 {
-  if (!isRunning && Serial.available() > 0) // each time we see something
+  while (!isRunning && Serial.available() > 0) // each time we see something
   {
-    serial_char = Serial.read(); // read individual byte from serial connection
-    
-    if (serial_char == '\n' || serial_char == '\r') // end of a command character
-    { 
+    char serial_char = char(Serial.read()); // read individual byte from serial connection
+    if (serial_char == 13 || serial_char == 10 || serial_char == 244
+        || serial_char == '\n' || serial_char == '\r' || serial_char == '\r\n') // end of a command character
+    {
       buffer[serial_count]=0;
       process_commands(buffer, serial_count);
       clear_buffer();
@@ -223,6 +233,7 @@ void get_command() // gets commands from serial connection and then calls up sub
     }
     else // not end of command
     {
+      Serial.print(buffer[serial_count]);
       if (serial_char == ';' || serial_char == '(') // semicolon signifies start of comment
       {
         comment_mode = true;

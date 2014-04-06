@@ -1,4 +1,8 @@
 
+
+stty -F /dev/my_serial_port <baud_rate> cs8 cread clocal
+As always, read the manpage before applying the above.  cread allows you to receive data. You may want to omit clocal if you are using flow control. If you aren't sure what the above settings are, ask, and I can write up a more complete answer.
+
 * Intro
 v0.1
 
