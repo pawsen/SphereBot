@@ -1,39 +1,45 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/python
 
-# Feeds a gcode File to the SphereBot.
-# 
-# Write a line to the serial device and wait for an "ok" response.
 
-# prerequisite:  http://pyserial.sourceforge.net
-#   Installation on Ubuntu: sudo aptitude install python-serial
+"""Feeds a gcode File to the SphereBot.
+
+Write a line to the serial device and wait for an "ok" response.
+
+prerequisite:  http://pyserial.sourceforge.net
+Installation on Ubuntu: sudo aptitude install python-serial
 
 
+feeder.py resets the Arduino Uno (rev2/rev3) boards when it creates a serial
+connection. In order to avoid it to start sending data before the arduino, an
+delay has been added.
+"""
+
+
+import glob
 
 
 # Configure:
-# BAUDRATE = 9600
 BAUDRATE = 115200
-DEVICE = "/dev/ttyACM0"
-#DEVICE = "/dev/tty.PL2303-00001004"
-#DEVICE = "/dev/tty.PL2303-00004006"
+# BAUDRATE = 9600
+DEVICE = glob.glob('/dev/ttyACM*')[0]
 TIMEOUT = 10
 STARTUPDELAY = 5
 
 # End configuration
 
-
-
-import sys
 import serial
 import re
 import time
 from optparse import OptionParser
+
 
 def y_displacement(x):
     # look into file egg-displace.dat for documentation
     return (0.00795338*x*x + 0.0734545*x + 0.15711)
 
 lastX = 0.0
+
 
 def correctDisplacement(lineIn):
     # extract x and y
@@ -51,14 +57,14 @@ def correctDisplacement(lineIn):
 
         if word[0] == 'Y':
             y = eval(word[1:])
-            foundY=True
+            foundY = True
 
     if foundY:
         y = y + y_displacement(lastX)
     else:
         return lineIn
 
-    lineOut=""
+    lineOut = ""
     for word in words:
         if word[0] == 'Y':
             lineOut = lineOut + "Y{0}".format(y)
@@ -67,13 +73,14 @@ def correctDisplacement(lineIn):
 
     return lineOut
 
+
 def penChange(lineIn):
     # Test Line for a Pen change request (M1)
     # If true, wait for user input
 
     if penChangePattern.match(lineIn):
         raw_input('Change pen ... press <Return> when finished ')
-    
+
 
 ######################## Main #########################
 
@@ -107,7 +114,7 @@ if options.wantToSend:
     print "Please wait ", STARTUPDELAY, " seconds for Arduino to reset"
     #Creating a serial connection resets the Arduino, need to wait before
     #sending first line or it will timeout
-    time.sleep(STARTUPDELAY) 
+    time.sleep(STARTUPDELAY)
 
 currentLine = 0.0
 lines = gcode.readlines()
@@ -122,8 +129,6 @@ for line in lines:
         print "First line might timeout on an Arduino with auto reset, increase the startup delay time. Will continue after timeout in ", TIMEOUT, " seconds"
 
     print "Working on line ", currentLine, " of ", totalLines
-
-
     print line, "({0:.1f}%)".format((currentLine / totalLines)*100),
 
     penChange(line)
@@ -131,7 +136,6 @@ for line in lines:
     if options.wantDisplaceCorrection:
         line = correctDisplacement(line)
         print ">> ", line,
-
 
     if options.wantToSend:
         sphereBot.write(line)
