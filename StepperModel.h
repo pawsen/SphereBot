@@ -20,7 +20,7 @@
 
 
 // Uncomment if You have Autohoming:
-#define AUTO_HOMING
+// #define AUTO_HOMING
 
 class StepperModel
 {

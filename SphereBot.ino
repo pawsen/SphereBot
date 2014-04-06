@@ -49,12 +49,13 @@ void drawArc(double centerX, double centerY, double endpointX, double endpointY,
 #define XAXIS_STEP_PIN 8
 #define XAXIS_ENABLE_PIN 6
 #define XAXIS_ENDSTOP_PIN -1
+const int XAXIS_STEP_PER_REVOLUTION = 200; //  360° / 1.8 °/step = 200
 
 #define YAXIS_DIR_PIN 10
 #define YAXIS_STEP_PIN 11
 #define YAXIS_ENABLE_PIN 9
-#define YAXIS_ENDSTOP_PIN -1 // <0 0> No Endstop!
-
+#define YAXIS_ENDSTOP_PIN -1 // <0 0> No Endstop
+const int YAXIS_STEP_PER_REVOLUTION = 200;
 #define SERVO_PIN 2
 
 /*
@@ -62,18 +63,19 @@ void drawArc(double centerX, double centerY, double endpointX, double endpointY,
  */
 
 #define DEFAULT_PEN_UP_POSITION 50
-#define XAXIS_MIN_STEPCOUNT -467
-#define XAXIS_MAX_STEPCOUNT 467
-#define DEFAULT_ZOOM_FACTOR 1. // With a Zoom-Faktor of .65, I can print gcode for Makerbot Unicorn without changes. 
+#define XAXIS_MIN_STEPCOUNT 0
+#define XAXIS_MAX_STEPCOUNT 0
+#define DEFAULT_ZOOM_FACTOR 1.0 // Zoom factor based on 1 px = 1 step gcode must be in px aka step (not mm)
                                // The zoom factor can be also manipulated by the propretiary code M402
 
 
 /* --------- */
 
 StepperModel xAxisStepper(XAXIS_DIR_PIN, XAXIS_STEP_PIN, XAXIS_ENABLE_PIN, XAXIS_ENDSTOP_PIN,
-        XAXIS_MIN_STEPCOUNT, XAXIS_MAX_STEPCOUNT, 200.0, 16);
+        XAXIS_MIN_STEPCOUNT, XAXIS_MAX_STEPCOUNT, XAXIS_STEP_PER_REVOLUTION, 16);
+
 StepperModel rotationStepper(YAXIS_DIR_PIN, YAXIS_STEP_PIN, YAXIS_ENABLE_PIN, YAXIS_ENDSTOP_PIN,
-        0, 0, 200.0, 16);
+        0, 0, YAXIS_STEP_PER_REVOLUTION, 16);
 
 SoftwareServo servo;
 boolean servoEnabled=true;
@@ -103,8 +105,8 @@ const double maxFeedrate = 6000.;
 
 void setup()
 {
-    /* Serial.begin(115200); */
-    Serial.begin(9600);
+    Serial.begin(115200);
+    /* Serial.begin(9600); */
 
     clear_buffer();
 
@@ -220,7 +222,7 @@ void commitSteppers(double speedrate)
 
 void get_command() // gets commands from serial connection and then calls up subsequent functions to deal with them
 {
-  while (!isRunning && Serial.available() > 0) // each time we see something
+  if (!isRunning && Serial.available() > 0) // each time we see something
   {
     char serial_char = char(Serial.read()); // read individual byte from serial connection
     if (serial_char == 13 || serial_char == 10 || serial_char == 244
@@ -233,7 +235,6 @@ void get_command() // gets commands from serial connection and then calls up sub
     }
     else // not end of command
     {
-      Serial.print(buffer[serial_count]);
       if (serial_char == ';' || serial_char == '(') // semicolon signifies start of comment
       {
         comment_mode = true;

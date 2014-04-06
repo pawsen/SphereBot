@@ -24,11 +24,21 @@ unzip TimerOne* -d TimerOne
 sudo mv TimerOne /usr/share/arduino/libraries/
 #+END_SRC
 
+Remember to set the MS1-MS3 pins on the stepstick to high in order to enable micro stepping - not low as the =wireScheme= shows
 
-To create tags File: ctags --langmap="C++:+.pde" S*
+I'm using the SM42HT47-1684A stepper motors with 1.8°/step, eg set the following in =SphereBot.ino=:
+XAXIS_STEP_PER_REVOLUTION = 200; //  360° / 1.8 °/step = 200
 
 
 ** GCode commands
+
+The scaling and speed does not work completely.
+For the files en the /gcode/ folder, add this:
+M402 S3.5 (zoom)
+and set the fill speed to F10000.00
+
+
+M01 Change pen
 
 G90	Absolut modus
 G91	Icremental modus:
